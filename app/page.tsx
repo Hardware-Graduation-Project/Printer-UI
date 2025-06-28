@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Sidebar } from "./components/sidebar";
-import { Header } from "./components/header";
 import { GCodeUpload } from "./components/gcode-upload";
 import { MotorControl } from "./components/motor-control";
 import { EmergencyStop } from "./components/emergency-stop";
@@ -13,7 +12,6 @@ import { GCodeConsole } from "./components/gcode-console";
 import { PrintHistory } from "./components/print-history";
 
 export default function Dashboard() {
-  const [emergencyStopOpen, setEmergencyStopOpen] = useState(false);
   const [errorModalOpen, setErrorModalOpen] = useState(false);
 
   return (
@@ -31,7 +29,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column */}
               <div className="space-y-6">
-                <GCodeUpload />
+                <RealtimeMonitoring />
                 <ForceSensor />
                 <ErrorDetection
                   open={errorModalOpen}
@@ -41,13 +39,13 @@ export default function Dashboard() {
 
               {/* Middle Column */}
               <div className="space-y-6">
-                <RealtimeMonitoring />
                 <MotorControl />
               </div>
 
               {/* Right Column */}
               <div className="space-y-6">
                 <GCodeConsole />
+                <GCodeUpload />
               </div>
             </div>
 

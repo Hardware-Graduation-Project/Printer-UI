@@ -107,21 +107,21 @@ export function GCodeConsole() {
   };
 
   return (
-    <Card className="h-96">
-      <CardHeader>
+    <Card className="h-96 flex flex-col">
+      <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <Terminal className="w-5 h-5" />
           G-code Console
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 h-full flex flex-col">
+      <CardContent className="space-y-4 flex-1 flex flex-col min-h-0">
         {/* Console Output */}
-        <ScrollArea className="flex-1 border rounded-md p-3 bg-gray-900 text-gray-100 font-mono text-sm">
+        <ScrollArea className="flex-1 border rounded-md p-3 bg-gray-900 text-gray-100 font-mono text-sm min-h-0">
           <div ref={scrollAreaRef} className="space-y-1">
             {history.map((entry) => (
               <div key={entry.id} className="flex">
                 <span className="text-gray-500 text-xs w-20 flex-shrink-0">
-                  entry.timestamp
+                  {entry.timestamp}
                 </span>
                 <span className={getEntryStyle(entry.type)}>
                   {getEntryPrefix(entry.type)}
@@ -133,7 +133,7 @@ export function GCodeConsole() {
         </ScrollArea>
 
         {/* Command Input */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <Input
             value={command}
             onChange={(e) => setCommand(e.target.value)}
@@ -144,21 +144,6 @@ export function GCodeConsole() {
           <Button onClick={sendCommand} size="icon">
             <Send className="w-4 h-4" />
           </Button>
-        </div>
-
-        {/* Quick Commands */}
-        <div className="flex gap-2 flex-wrap">
-          {["G28", "M104 S200", "M140 S60", "G1 Z10"].map((cmd) => (
-            <Button
-              key={cmd}
-              variant="outline"
-              size="sm"
-              onClick={() => setCommand(cmd)}
-              className="font-mono text-xs"
-            >
-              {cmd}
-            </Button>
-          ))}
         </div>
       </CardContent>
     </Card>

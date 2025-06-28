@@ -2,27 +2,16 @@
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Home,
-  Upload,
-  Settings,
-  Activity,
-  FileText,
-  Gauge,
-  AlertTriangle,
-  Terminal,
-} from "lucide-react";
+import Image from "next/image";
+import { Home, Upload, Activity, FileText, Gauge } from "lucide-react";
 import { Logo } from "../assets";
 
 const navigation = [
   { name: "Dashboard", icon: Home, current: true },
   { name: "Upload", icon: Upload, current: false },
   { name: "Monitor", icon: Activity, current: false },
-  { name: "Controls", icon: Settings, current: false },
   { name: "Sensors", icon: Gauge, current: false },
-  { name: "Console", icon: Terminal, current: false },
   { name: "History", icon: FileText, current: false },
-  { name: "Alerts", icon: AlertTriangle, current: false },
 ];
 
 export function Sidebar() {
@@ -32,10 +21,7 @@ export function Sidebar() {
         {/* Logo */}
         <div className="flex items-center px-6 py-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            {/* <div className="w-8 h-8 rounded-lg flex items-center justify-center"> */}
-            {/* <Settings className="w-5 h-5 text-white" /> */}
-            <img src={Logo} alt="logo" />
-            {/* </div> */}
+            <Image src={Logo} alt="SmartPrint Logo" width={32} height={32} />
             <span className="text-xl font-semibold text-gray-900">
               SmartPrint
             </span>
