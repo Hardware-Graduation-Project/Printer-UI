@@ -31,10 +31,6 @@ export default function Dashboard() {
               <div className="space-y-6">
                 <RealtimeMonitoring />
                 <ForceSensor />
-                <ErrorDetection
-                  open={errorModalOpen}
-                  onOpenChange={setErrorModalOpen}
-                />
               </div>
 
               {/* Middle Column */}
@@ -50,6 +46,10 @@ export default function Dashboard() {
             </div>
 
             {/* Full Width Section */}
+            <ErrorDetection
+              open={errorModalOpen}
+              onOpenChange={setErrorModalOpen}
+            />
             <PrintHistory />
           </main>
         </div>

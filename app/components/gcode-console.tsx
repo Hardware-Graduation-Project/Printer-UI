@@ -107,14 +107,14 @@ export function GCodeConsole() {
   };
 
   return (
-    <Card className="h-96 flex flex-col">
+    <Card className="h-71 flex flex-col">
       <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <Terminal className="w-5 h-5" />
           G-code Console
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 flex-1 flex flex-col min-h-0">
+      <CardContent className="space-y-2 flex-1 flex flex-col min-h-0">
         {/* Console Output */}
         <ScrollArea className="flex-1 border rounded-md p-3 bg-gray-900 text-gray-100 font-mono text-sm min-h-0">
           <div ref={scrollAreaRef} className="space-y-1">
@@ -142,7 +142,7 @@ export function GCodeConsole() {
             className="font-mono"
           />
           <Button onClick={sendCommand} size="icon">
-            <Send className="w-4 h-4" />
+            <Send className="w-3 h-3" />
           </Button>
         </div>
       </CardContent>
