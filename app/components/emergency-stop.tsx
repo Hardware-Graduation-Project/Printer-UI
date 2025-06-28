@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { printerApi } from "../APIs/MonitoringApis";
 
+
 export function EmergencyStop() {
   const [printerState, setPrinterState] = useState<string>("ready");
   const [isStoppingPrint, setIsStoppingPrint] = useState(false);
   const [isRestartingFirmware, setIsRestartingFirmware] = useState(false);
+  const alarmSound = new Audio("/sounds/alarm.mp3");
 
   // Check printer status on component mount
   useEffect(() => {
@@ -29,6 +31,10 @@ export function EmergencyStop() {
 
   const handleEmergencyStop = async () => {
     setIsStoppingPrint(true);
+     const alarmSound = new Audio("/sounds/alarm.mp3");
+  alarmSound.play().catch((err) => {
+    console.warn("Audio playback failed:", err);
+  });
 
     try {
       // Keep sending emergency stop until status is not printing
