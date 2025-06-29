@@ -1,40 +1,32 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Clock, Code } from "lucide-react";
-
-type PrintStatus = "Idle" | "Printing" | "Paused" | "Error";
+import { Activity, Clock } from "lucide-react";
+import {
+  usePrinterStatus,
+  PrintStatus,
+} from "../contexts/PrinterStatusContext";
 
 export function RealtimeMonitoring() {
-  const [progress, setProgress] = useState(67);
-  const [status, setStatus] = useState<PrintStatus>("Printing");
-  const [elapsedTime, setElapsedTime] = useState("02:34:12");
-  const [estimatedTime, setEstimatedTime] = useState("03:45:00");
-
-  // Simulate real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (status === "Printing") {
-        setProgress((prev) => Math.min(prev + 0.1, 100));
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [status]);
+  const { state } = usePrinterStatus();
+  const { status, progress, elapsedTime, estimatedTime } = state;
 
   const getStatusColor = (status: PrintStatus) => {
     switch (status) {
-      case "Idle":
+      case "ready":
         return "bg-gray-500";
-      case "Printing":
+      case "printing":
         return "bg-green-500";
-      case "Paused":
+      case "paused":
         return "bg-yellow-500";
-      case "Error":
+      case "error":
         return "bg-red-500";
+      case "complete":
+        return "bg-blue-500";
+      case "cancelled":
+        return "bg-orange-500";
       default:
         return "bg-gray-500";
     }

@@ -10,6 +10,8 @@ import { ForceSensor } from "./components/force-sensor";
 import { ErrorDetection } from "./components/error-detection";
 import { GCodeConsole } from "./components/gcode-console";
 import { PrintHistory } from "./components/print-history";
+import { PrinterControlDemo } from "./components/printer-control-demo";
+import { PrinterStatusCard } from "./components/printer-status-card";
 
 export default function Dashboard() {
   const [errorModalOpen, setErrorModalOpen] = useState(false);
@@ -29,13 +31,15 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column */}
               <div className="space-y-6">
-                <RealtimeMonitoring />
+                <PrinterStatusCard />
+                <MotorControl />
                 <ForceSensor />
               </div>
 
               {/* Middle Column */}
               <div className="space-y-6">
-                <MotorControl />
+                <RealtimeMonitoring />
+                <PrinterControlDemo />
               </div>
 
               {/* Right Column */}
