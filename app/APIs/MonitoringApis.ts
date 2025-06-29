@@ -47,4 +47,24 @@ export const printerApi = {
     }
     return response.json();
   },
+
+  homeZAxis: async (): Promise<ApiResponse> => {
+    const response = await fetch(`${API_BASE_URL}/api/printer/home-z`, {
+      method: "POST",
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  },
+
+  homeXYAxes: async (): Promise<ApiResponse> => {
+    const response = await fetch(`${API_BASE_URL}/api/printer/home-xy`, {
+      method: "POST",
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  },
 };
