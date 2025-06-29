@@ -3,18 +3,31 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { Home, Upload, Activity, FileText, Gauge } from "lucide-react";
+import {
+  Home,
+  Upload,
+  Activity,
+  FileText,
+  Gauge,
+  Settings,
+} from "lucide-react";
 import { Logo } from "../assets";
+
+interface SidebarProps {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}
 
 const navigation = [
   { name: "Dashboard", icon: Home, current: true },
   { name: "Upload", icon: Upload, current: false },
   { name: "Monitor", icon: Activity, current: false },
   { name: "Sensors", icon: Gauge, current: false },
+  { name: "Controllers", icon: Settings, current: false },
   { name: "History", icon: FileText, current: false },
 ];
 
-export function Sidebar() {
+export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   return (
     <div className="fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg border-r border-gray-200">
       <div className="flex flex-col h-full">
@@ -33,13 +46,14 @@ export function Sidebar() {
           {navigation.map((item) => (
             <Button
               key={item.name}
-              variant={item.current ? "default" : "ghost"}
+              variant={activeTab === item.name ? "default" : "ghost"}
               className={cn(
                 "w-full justify-start gap-3 h-11",
-                item.current
+                activeTab === item.name
                   ? "bg-blue-50 text-blue-700 hover:bg-blue-100"
                   : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
               )}
+              onClick={() => onTabChange(item.name)}
             >
               <item.icon className="w-5 h-5" />
               {item.name}
