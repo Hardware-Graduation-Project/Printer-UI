@@ -63,17 +63,47 @@ export function ControllersPanel() {
     setIsLoading(true);
     try {
       const controllersData = await controllerService.getAllControllers();
-      const formattedControllers: Controller[] = controllersData.map(
-        (ctrl, index) => ({
-          id: ctrl.controller_id,
-          name: ctrl.controller_name,
-          type: "Klipper", // Default type
-          status: "offline" as const, // Default status
-          active: index === 0, // Make first controller active by default
-          configFile: "", // Will be loaded when editing
-          lastModified: new Date(ctrl.updated_at).toLocaleString(),
+
+      // Load full controller data including config text
+      const formattedControllers: Controller[] = await Promise.all(
+        controllersData.map(async (ctrl, index) => {
+          try {
+            // Load the full controller config
+            const fullController = await controllerService.getController(
+              ctrl.controller_id
+            );
+            console.log(`Loaded config for ${ctrl.controller_name}:`, {
+              textLength: fullController.text?.length || 0,
+              lineCount: fullController.text?.split("\n").length || 0,
+            });
+
+            return {
+              id: ctrl.controller_id,
+              name: ctrl.controller_name,
+              type: "Klipper",
+              status: "offline" as const,
+              active: index === 0,
+              configFile: fullController.text || "",
+              lastModified: new Date(ctrl.updated_at).toLocaleString(),
+            };
+          } catch (error) {
+            console.error(
+              `Failed to load config for ${ctrl.controller_name}:`,
+              error
+            );
+            return {
+              id: ctrl.controller_id,
+              name: ctrl.controller_name,
+              type: "Klipper",
+              status: "offline" as const,
+              active: index === 0,
+              configFile: "", // Empty if failed to load
+              lastModified: new Date(ctrl.updated_at).toLocaleString(),
+            };
+          }
         })
       );
+
       setControllers(formattedControllers);
     } catch (error) {
       console.error("Failed to load controllers:", error);
@@ -91,42 +121,70 @@ export function ControllersPanel() {
     setSelectedController(controller);
     setIsDialogOpen(true);
 
+    // First, set the existing config if available
+    if (controller.configFile) {
+      console.log("Setting existing config from controller:", {
+        textLength: controller.configFile.length,
+        lineCount: controller.configFile.split("\n").length,
+      });
+      setEditedConfig(controller.configFile);
+    }
+
     try {
-      // Load the full controller config from API
+      // Try to load the latest config from API
       const fullController = await controllerService.getController(
         controller.id
       );
-      setEditedConfig(fullController.text);
+
+      // Debug: Log the loaded config
+      console.log("Loaded fresh controller config:", {
+        controllerId: controller.id,
+        textLength: fullController.text?.length || 0,
+        lineCount: fullController.text?.split("\n").length || 0,
+        firstLine: fullController.text?.split("\n")[0] || "",
+        lastLine: fullController.text?.split("\n").slice(-1)[0] || "",
+        fullText: fullController.text,
+      });
+
+      // Update with fresh config
+      setEditedConfig(fullController.text || controller.configFile || "");
     } catch (error) {
       console.error("Failed to load controller config:", error);
       toast({
-        title: "Error",
-        description: "Failed to load controller configuration.",
-        variant: "destructive",
+        title: "Warning",
+        description:
+          "Using cached configuration. Failed to load latest version.",
+        variant: "default",
       });
-      // Fallback to existing config if available
-      setEditedConfig(controller.configFile);
+      // Keep the existing config that was already set
+      if (!controller.configFile) {
+        setEditedConfig("");
+      }
     }
   };
 
   const handleAddController = () => {
+    const defaultConfig = [
+      "# Klipper Configuration",
+      "# New Controller",
+      "",
+      "[mcu]",
+      "serial: /dev/serial/by-id/usb-XXXXXXXX",
+      "",
+      "[printer]",
+      "kinematics: cartesian",
+      "max_velocity: 300",
+      "max_accel: 3000",
+      "max_z_velocity: 5",
+      "max_z_accel: 100",
+      "",
+      "# Add your configuration sections here",
+    ].join("\n");
+
     setNewController({
       name: "",
       type: "Klipper",
-      configFile: `# Klipper Configuration
-# New Controller
-
-[mcu]
-serial: /dev/serial/by-id/usb-XXXXXXXX
-
-[printer]
-kinematics: cartesian
-max_velocity: 300
-max_accel: 3000
-max_z_velocity: 5
-max_z_accel: 100
-
-# Add your configuration sections here`,
+      configFile: defaultConfig,
     });
     setIsAddDialogOpen(true);
   };
@@ -143,10 +201,22 @@ max_z_accel: 100
 
     try {
       setIsLoading(true);
+
+      // Debug: Log the config before sending
+      console.log("Config being sent:", {
+        controller_name: newController.name,
+        text: newController.configFile,
+        textLength: newController.configFile.length,
+        lineCount: newController.configFile.split("\n").length,
+      });
+
       const createdController = await controllerService.createController({
         controller_name: newController.name,
         text: newController.configFile,
       });
+
+      // Debug: Log the response
+      console.log("Controller created:", createdController);
 
       const controller: Controller = {
         id: createdController.controller_id,
@@ -163,20 +233,22 @@ max_z_accel: 100
       setNewController({
         name: "",
         type: "Klipper",
-        configFile: `# Klipper Configuration
-# New Controller
-
-[mcu]
-serial: /dev/serial/by-id/usb-XXXXXXXX
-
-[printer]
-kinematics: cartesian
-max_velocity: 300
-max_accel: 3000
-max_z_velocity: 5
-max_z_accel: 100
-
-# Add your configuration sections here`,
+        configFile: [
+          "# Klipper Configuration",
+          "# New Controller",
+          "",
+          "[mcu]",
+          "serial: /dev/serial/by-id/usb-XXXXXXXX",
+          "",
+          "[printer]",
+          "kinematics: cartesian",
+          "max_velocity: 300",
+          "max_accel: 3000",
+          "max_z_velocity: 5",
+          "max_z_accel: 100",
+          "",
+          "# Add your configuration sections here",
+        ].join("\n"),
       });
 
       toast({
@@ -195,22 +267,39 @@ max_z_accel: 100
     }
   };
 
-  const handleActivateController = (controllerId: string) => {
-    setControllers(
-      controllers.map((ctrl) => ({
-        ...ctrl,
-        active: ctrl.id === controllerId,
-      }))
-    );
-
+  const handleActivateController = async (controllerId: string) => {
     const activatedController = controllers.find(
       (ctrl) => ctrl.id === controllerId
     );
-    if (activatedController) {
+    if (!activatedController) return;
+
+    try {
+      setIsLoading(true);
+
+      // Call the API to set the printer config with the controller ID
+      await controllerService.setPrinterConfig(controllerId);
+
+      // Update the local state to reflect the activation
+      setControllers(
+        controllers.map((ctrl) => ({
+          ...ctrl,
+          active: ctrl.id === controllerId,
+        }))
+      );
+
       toast({
         title: "Controller Activated",
-        description: `${activatedController.name} is now the active controller.`,
+        description: `${activatedController.name} is now the active controller and printer config has been set.`,
       });
+    } catch (error) {
+      console.error("Failed to activate controller:", error);
+      toast({
+        title: "Error",
+        description: "Failed to activate controller. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -269,10 +358,24 @@ max_z_accel: 100
 
     try {
       setIsLoading(true);
+
+      // Debug: Log what's being saved
+      console.log("Saving controller config:", {
+        controllerId: selectedController.id,
+        textLength: editedConfig.length,
+        lineCount: editedConfig.split("\n").length,
+        firstLine: editedConfig.split("\n")[0],
+        lastLine: editedConfig.split("\n").slice(-1)[0],
+        fullText: editedConfig,
+      });
+
       const updatedController = await controllerService.updateController(
         selectedController.id,
         { text: editedConfig }
       );
+
+      // Debug: Log what was returned
+      console.log("Updated controller response:", updatedController);
 
       setControllers(
         controllers.map((ctrl) =>
@@ -305,8 +408,28 @@ max_z_accel: 100
     }
   };
 
-  const handleDownloadConfig = (controller: Controller) => {
-    const blob = new Blob([controller.configFile], { type: "text/plain" });
+  const handleDownloadConfig = async (controller: Controller) => {
+    let configContent = controller.configFile;
+
+    // If no config in memory, try to fetch it
+    if (!configContent) {
+      try {
+        const fullController = await controllerService.getController(
+          controller.id
+        );
+        configContent = fullController.text || "";
+      } catch (error) {
+        console.error("Failed to load config for download:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load configuration for download.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    const blob = new Blob([configContent], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -500,14 +623,18 @@ max_z_accel: 100
                       variant={controller.active ? "default" : "outline"}
                       size="sm"
                       onClick={() => handleActivateController(controller.id)}
-                      disabled={controller.active}
+                      disabled={controller.active || isLoading}
                       className={
                         controller.active
                           ? "bg-blue-600 hover:bg-blue-700 text-white"
                           : ""
                       }
                     >
-                      <Power className="w-4 h-4" />
+                      {isLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Power className="w-4 h-4" />
+                      )}
                     </Button>
                     <Button
                       variant="outline"
@@ -580,9 +707,21 @@ max_z_accel: 100
                             <Textarea
                               id="config-content"
                               value={editedConfig}
-                              onChange={(e) => setEditedConfig(e.target.value)}
+                              onChange={(e) => {
+                                console.log("Edit textarea value changed:", {
+                                  length: e.target.value.length,
+                                  lineCount: e.target.value.split("\n").length,
+                                  firstLine: e.target.value.split("\n")[0],
+                                  lastLine: e.target.value
+                                    .split("\n")
+                                    .slice(-1)[0],
+                                });
+                                setEditedConfig(e.target.value);
+                              }}
                               className="min-h-[400px] font-mono text-sm resize-none"
                               placeholder="Enter configuration content..."
+                              spellCheck={false}
+                              wrap="off"
                             />
                           </div>
 
@@ -655,14 +794,22 @@ max_z_accel: 100
               <Textarea
                 id="new-config-content"
                 value={newController.configFile}
-                onChange={(e) =>
+                onChange={(e) => {
+                  console.log("Textarea value changed:", {
+                    length: e.target.value.length,
+                    lineCount: e.target.value.split("\n").length,
+                    firstLine: e.target.value.split("\n")[0],
+                    lastLine: e.target.value.split("\n").slice(-1)[0],
+                  });
                   setNewController({
                     ...newController,
                     configFile: e.target.value,
-                  })
-                }
+                  });
+                }}
                 className="flex-1 font-mono text-sm resize-none border rounded-md p-3"
                 placeholder="Enter Klipper configuration content..."
+                spellCheck={false}
+                wrap="off"
               />
             </div>
 

@@ -144,4 +144,24 @@ export const controllerService = {
       await response.json();
     return apiResponse.data!.controller;
   },
+
+  // Set printer config
+  setPrinterConfig: async (controllerId: string): Promise<any> => {
+    const response = await fetch(`${API_BASE_URL}/api/printer/set-config`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        controller_id: controllerId,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to set printer config: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result;
+  },
 };
